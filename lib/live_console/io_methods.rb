@@ -1,9 +1,10 @@
 module LiveConsole::IOMethods
 	List = []
 
-	Dir[File.join(File.dirname(__FILE__), 'io_methods', '*.rb')].each { |entry|
+	Dir[File.join(File.dirname(__FILE__), 'io_methods', '*')].each { |dir|
+	  entry = dir + '/' + File.basename(dir)
 		fname = entry.sub /\.rb$/, ''
-		classname = File.basename(entry, '.rb').capitalize.
+		classname = File.basename(entry,'.rb').capitalize.
 			gsub(/_(\w)/) { $1.upcase }.sub(/io$/i, 'IO').to_sym
 		mname = File.basename(fname).sub(/_io$/, '').to_sym
 
@@ -33,21 +34,13 @@ module LiveConsole::IOMethods
 
 		def self.included(other)
 			other.instance_eval {
-				readers = [:opts, :raw_input, :raw_output]
+				readers = [:opts]
 				attr_accessor *readers
 				private *readers.map { |r| (r.to_s + '=').to_sym }
-
 				other::RequiredOpts.each { |opt| 
 					define_method(opt) { opts[opt] } 
 				}
 			}
 		end
-
-		def select
-			IO.select [server], [], [], 1 if server
-		end
-
-		private
-		attr_accessor :server
 	end
 end

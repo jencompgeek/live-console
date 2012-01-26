@@ -9,8 +9,8 @@ require 'socket'
 require 'live_console_config'
 
 # LiveConsole provides a socket that can be connected to via netcat or telnet
-# to use to connect to an IRB session inside a running process.  It creates a
-# thread that listens on the specified address/port or Unix Domain Socket path,
+# to use to connect to an IRB session inside a running process.  It listens on the
+# specified address/port or Unix Domain Socket path,
 # and presents connecting clients with an IRB shell.  Using this, you can
 # execute code on a running instance of a Ruby process to inspect the state or
 # even patch code on the fly.  There is currently no readline support.
@@ -20,9 +20,9 @@ class LiveConsole
 
 	attr_accessor :io_method, :io, :thread, :bind
 	private :io_method=, :io=, :thread=
-	
+
 	# call-seq:
-	#	# Bind a LiveConsole to localhost:3030 (only allow clients on this 
+	#	# Bind a LiveConsole to localhost:3030 (only allow clients on this
 	#	# machine to connect):
 	#	LiveConsole.new :socket, :port => 3030
 	#	# Accept connections from anywhere on port 3030.  Ridiculously insecure:
@@ -30,19 +30,19 @@ class LiveConsole
 	#	# Use a Unix Domain Socket (which is more secure) instead:
 	#	LiveConsole.new(:unix_socket, :path => '/tmp/my_liveconsole.sock',
 	#	                :mode => 0600, :uid => Process.uid, :gid => Process.gid)
-	#	# By default, the mode is 0600, and the uid and gid are those of the 
+	#	# By default, the mode is 0600, and the uid and gid are those of the
 	#	# current process.  These three options are for the file's permissions.
 	#	# You can also supply a binding for IRB's toplevel:
-	#	LiveConsole.new(:unix_socket, 
+	#	LiveConsole.new(:unix_socket,
 	#		:path => "/tmp/live_console_#{Process.pid}.sock", :bind => binding)
 	#
-	# Creates a new LiveConsole.  You must next call LiveConsole#start when you
-	# want to spawn the thread to accept connections and start the console.
+	# Creates a new LiveConsole.  You must next call LiveConsole#start or LiveConsole#start_blocking
+	# when you want to accept connections and start the console.
 	def initialize(io_method, opts = {})
 		self.io_method = io_method.to_sym
 		self.bind = opts.delete :bind
 		unless IOMethods::List.include?(self.io_method)
-			raise ArgumentError, "Unknown IO method: #{io_method}" 
+			raise ArgumentError, "Unknown IO method: #{io_method}"
 		end
 
 		init_io opts
@@ -52,7 +52,7 @@ class LiveConsole
 	# IRB console to new connections.  If a thread is already running, this
 	# method simply returns false; otherwise, it returns the new thread.
 	def start
-		if thread 
+	  if thread
 			if thread.alive?
 				return false
 			else
@@ -61,20 +61,30 @@ class LiveConsole
 			end
 		end
 
-		self.thread = Thread.new { 
-			loop {
-				Thread.pass
-				if io.start
-					irb_io = GenericIOMethod.new io.raw_input, io.raw_output
+		self.thread = Thread.new {
+	    start_blocking
+	  }
+	  thread
+	end
+
+	# LiveConsole#start_blocking executes a loop to listen for, accept,
+	# and provide an IRB console to new connections.
+	# This is a blocking call and the only way to stop it is to kill the process
+	def start_blocking
+		loop {
+		  conn = io.get_connection
+		  #This will block until a connection is made or a failure occurs
+		  if conn.start
+		    thread = Thread.new(conn) {
+					irb_io = GenericIOMethod.new conn.raw_input, conn.raw_output
 					begin
 						IRB.start_with_io(irb_io, bind)
 					rescue Errno::EPIPE => e
-						io.stop
+						conn.stop
 					end
-				end
-			}
+		    }
+	    end
 		}
-		thread
 	end
 
 	# Ends the running thread, if it exists.  Returns true if a thread was
@@ -97,7 +107,7 @@ class LiveConsole
 		end
 	end
 
-	# Restarts.  Useful for binding changes.  Return value is the same as for 
+	# Restarts.  Useful for binding changes.  Return value is the same as for
 	# LiveConsole#start.
 	def restart
 		r = lambda { stop; start }
@@ -122,7 +132,7 @@ class LiveConsole
 end
 
 # We need to make a couple of changes to the IRB module to account for using a
-# weird I/O method and re-starting IRB from time to time.  
+# weird I/O method and re-starting IRB from time to time.
 module IRB
 	@inited = false
 
@@ -145,7 +155,7 @@ module IRB
 		@CONF[:MAIN_CONTEXT] = irb.context
 		@CONF[:PROMPT_MODE] = :INF_RUBY
 
-		catch(:IRB_EXIT) { 
+		catch(:IRB_EXIT) {
 			begin
 				irb.eval_input
 			rescue StandardError => e
