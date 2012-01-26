@@ -1,6 +1,6 @@
 # LiveConsole
 # Pete Elmore (pete.elmore@gmail.com), 2007-10-18
-# debu.gs/live-console
+# Jennifer Hickey
 # See doc/LICENSE.
 
 require 'irb'
@@ -218,6 +218,10 @@ class GenericIOMethod < IRB::StdioInputMethod
 
 	def eof?
 		input.eof?
+	end
+
+	def encoding
+	  input.external_encoding
 	end
 
 	def close
