@@ -3,7 +3,6 @@ module LiveConsoleConfig
 	Authors = 'Pete Elmore'
 	Email = 'pete.elmore@gmail.com'
 	PkgName = 'live_console'
-	Version = '0.2.3'
-	URL = 'http://debu.gs/live-console'
+	Version = '0.2.4'
 	Project = 'live-console'
 end

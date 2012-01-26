@@ -1,6 +1,6 @@
 require 'rake/gempackagetask'
 require 'rake/rdoctask'
-require 'lib/live_console_config'
+require File.join(File.dirname(__FILE__), 'lib','live_console_config')
 require 'fileutils'
 
 $: << "#{File.dirname(__FILE__)}/lib"
@@ -10,8 +10,6 @@ spec = Gem::Specification.new { |s|
 	s.version = LiveConsoleConfig::Version
 	s.author = LiveConsoleConfig::Authors
 	s.email = LiveConsoleConfig::Email
-	s.homepage = LiveConsoleConfig::URL
-	s.rubyforge_project = LiveConsoleConfig::Project
 
 	s.platform = Gem::Platform::RUBY
 

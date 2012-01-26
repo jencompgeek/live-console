@@ -14,8 +14,7 @@ spec = Gem::Specification.new { |s|
 	s.executables = ["udscat"]
 	s.name = "live_console"
 	s.summary = "A library to support adding an irb console to your running application."
-	s.homepage = "http://debu.gs/live-console"
-	s.version = "0.2.3"
+	s.version = "0.2.4"
 }
 if __FILE__ == $0
 	Gem::Builder.new(spec).build 
