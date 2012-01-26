@@ -148,12 +148,13 @@ module IRB
 		end
 
 		ws = IRB::WorkSpace.new(bind)
+		#This needs to be before Irb.new so we get a prompt the first time
+  	@CONF[:PROMPT_MODE] = :INF_RUBY
 		irb = Irb.new(ws, io, io)
 		bind ||= IRB::Frame.top(1) rescue TOPLEVEL_BINDING
 
 		@CONF[:IRB_RC].call(irb.context) if @CONF[:IRB_RC]
 		@CONF[:MAIN_CONTEXT] = irb.context
-		@CONF[:PROMPT_MODE] = :INF_RUBY
 
 		catch(:IRB_EXIT) {
 			begin
@@ -209,7 +210,6 @@ class GenericIOMethod < IRB::StdioInputMethod
 		output.print @prompt
 		output.flush
 		@line[@line_no += 1] = input.gets
-		# @io.flush	# Not sure this is needed.
 		@line[@line_no]
 	end
 
