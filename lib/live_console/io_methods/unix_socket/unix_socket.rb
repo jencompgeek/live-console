@@ -17,6 +17,6 @@ class LiveConsole::IOMethods::UnixSocket
   end
 
 	def get_connection
-	  LiveConsole::IOMethods::UnixSocketConnection.new @server
+	  LiveConsole::IOMethods::UnixSocketConnection.new(@server,opts)
 	end
 end

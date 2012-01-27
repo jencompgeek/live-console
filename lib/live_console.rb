@@ -6,7 +6,7 @@
 require 'irb'
 require 'irb/frame'
 require 'socket'
-require 'live_console_config'
+
 
 # LiveConsole provides a socket that can be connected to via netcat or telnet
 # to use to connect to an IRB session inside a running process.  It listens on the
@@ -18,8 +18,8 @@ class LiveConsole
 	include Socket::Constants
 	autoload :IOMethods, 'live_console/io_methods'
 
-	attr_accessor :io_method, :io, :thread, :bind
-	private :io_method=, :io=, :thread=
+	attr_accessor :io_method, :io, :thread, :bind, :authenticate
+	private :io_method=, :io=, :thread=, :authenticate=
 
 	# call-seq:
 	#	# Bind a LiveConsole to localhost:3030 (only allow clients on this
@@ -27,6 +27,12 @@ class LiveConsole
 	#	LiveConsole.new :socket, :port => 3030
 	#	# Accept connections from anywhere on port 3030.  Ridiculously insecure:
 	#	LiveConsole.new(:socket, :port => 3030, :host => '0.0.0.0')
+	#	# Accept connections from anywhere on port 3030, secured with a plain-text credentials file
+	# # credentials_file should be of the form:
+	# # username: <username>
+	# # password: <password>
+	#	LiveConsole.new(:socket, :port => 3030, :host => '0.0.0.0', :authenticate=>true,
+	#                 :credentials_file='/path/to/.consoleaccess)
 	#	# Use a Unix Domain Socket (which is more secure) instead:
 	#	LiveConsole.new(:unix_socket, :path => '/tmp/my_liveconsole.sock',
 	#	                :mode => 0600, :uid => Process.uid, :gid => Process.gid)
@@ -41,6 +47,7 @@ class LiveConsole
 	def initialize(io_method, opts = {})
 		self.io_method = io_method.to_sym
 		self.bind = opts.delete :bind
+		self.authenticate = opts.delete :authenticate
 		unless IOMethods::List.include?(self.io_method)
 			raise ArgumentError, "Unknown IO method: #{io_method}"
 		end
@@ -76,12 +83,19 @@ class LiveConsole
 		  #This will block until a connection is made or a failure occurs
 		  if conn.start
 		    thread = Thread.new(conn) {
-					irb_io = GenericIOMethod.new conn.raw_input, conn.raw_output
-					begin
-						IRB.start_with_io(irb_io, bind)
-					rescue Errno::EPIPE => e
-						conn.stop
-					end
+		        start_irb = true
+            if authenticate && !conn.authenticate
+              conn.stop
+              start_irb = false
+            end
+            if start_irb
+					    irb_io = GenericIOMethod.new conn.raw_input, conn.raw_output, readline
+					    begin
+						    IRB.start_with_io(irb_io, bind)
+					    rescue Errno::EPIPE => e
+                conn.stop
+					    end
+            end
 		    }
 	    end
 		}

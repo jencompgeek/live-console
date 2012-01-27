@@ -4,8 +4,9 @@ class LiveConsole::IOMethods::UnixSocketConnection
 
   attr_accessor :raw_input, :raw_output
 
-  def initialize(server)
+  def initialize(server, opts)
     @server = server
+    @opts = opts
   end
 
   def start
@@ -27,6 +28,10 @@ class LiveConsole::IOMethods::UnixSocketConnection
 
 	def select
 		IO.select [@server], [], [], 1 if @server
+	end
+
+	def authenticate
+	  true
 	end
 
 end

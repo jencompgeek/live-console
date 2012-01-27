@@ -14,7 +14,7 @@ class LiveConsole::IOMethods::SocketIO
   end
 
 	def get_connection
-	  LiveConsole::IOMethods::SocketIOConnection.new @server
+	  LiveConsole::IOMethods::SocketIOConnection.new(@server, opts)
 	end
 
 end
