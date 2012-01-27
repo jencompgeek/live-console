@@ -6,20 +6,20 @@
 require 'irb'
 require 'irb/frame'
 require 'socket'
-
+require 'irb/completion'
 
 # LiveConsole provides a socket that can be connected to via netcat or telnet
 # to use to connect to an IRB session inside a running process.  It listens on the
 # specified address/port or Unix Domain Socket path,
 # and presents connecting clients with an IRB shell.  Using this, you can
 # execute code on a running instance of a Ruby process to inspect the state or
-# even patch code on the fly.  There is currently no readline support.
+# even patch code on the fly.
 class LiveConsole
 	include Socket::Constants
 	autoload :IOMethods, 'live_console/io_methods'
 
-	attr_accessor :io_method, :io, :thread, :bind, :authenticate
-	private :io_method=, :io=, :thread=, :authenticate=
+	attr_accessor :io_method, :io, :thread, :bind, :authenticate, :readline
+	private :io_method=, :io=, :thread=, :authenticate=, :readline=
 
 	# call-seq:
 	#	# Bind a LiveConsole to localhost:3030 (only allow clients on this
@@ -48,6 +48,7 @@ class LiveConsole
 		self.io_method = io_method.to_sym
 		self.bind = opts.delete :bind
 		self.authenticate = opts.delete :authenticate
+		self.readline = opts.delete :readline
 		unless IOMethods::List.include?(self.io_method)
 			raise ArgumentError, "Unknown IO method: #{io_method}"
 		end
@@ -209,10 +210,11 @@ class GenericIOMethod < IRB::StdioInputMethod
 	#
 	# Creates a GenericIOMethod, using either a single object for both input
 	# and output, or one object for input and another for output.
-	def initialize(input, output = nil)
+	def initialize(input, output = nil, readline=false)
 		@input, @output = input, output
 		@line = []
 		@line_no = 0
+		@readline = readline
 	end
 
 	attr_reader :input
@@ -223,7 +225,15 @@ class GenericIOMethod < IRB::StdioInputMethod
 	def gets
 		output.print @prompt
 		output.flush
-		@line[@line_no += 1] = input.gets
+		line = input.gets
+		if @readline
+		  #Return tab completion data as long as we receive input that ends in '\t'
+		  while line.chomp =~ /\t\z/n
+  		  run_completion_proc line.chomp.chop
+  		  line = input.gets
+  		end
+		end
+		@line[@line_no += 1] = line
 		@line[@line_no]
 	end
 
@@ -251,5 +261,16 @@ class GenericIOMethod < IRB::StdioInputMethod
 	def close
 		input.close
 		output.close if @output
+	end
+
+	private
+	# Runs the IRB CompletionProc with the given argument and writes the array to output stream as
+	# a comma-separated String, terminated by newline (so clients know when all data received)
+	def run_completion_proc(line)
+	  opts = IRB::InputCompletor::CompletionProc.call(line)
+	  opts.compact!
+	  optstrng = opts.join(",") + "\n"
+	  output.print optstrng
+	  output.flush
 	end
 end

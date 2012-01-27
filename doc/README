@@ -92,8 +92,15 @@ only works for the TCP socket mode.
 
 == Bugs
 
-LiveConsole lacks many of the niceties of IRB on the console, like Readline
-support.  For this, you can actually use the wonderful rlwrap program, which
+LiveConsole lacks many of the niceties of IRB on the console, like full Readline
+support.  LiveConsole does offer tab completion if you write a client that sends
+the phrase to complete, ending with a tab and newline.  LiveConsole will activate the IRB
+completion proc and send back the results, terminated by newline.
+
+Readline history support can be added if anyone finds it useful to manage history
+remotely.
+
+For full Readline support, you can actually use the wonderful rlwrap program, which
 wraps an arbitrary interactive program in readline.  For example, to connect to
 a LiveConsole on localhost:3333, use
 	rlwrap netcat localhost 3333
