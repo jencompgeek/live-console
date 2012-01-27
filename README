@@ -24,10 +24,6 @@ You can install via rubygems,
 
   gem install live_console
 
-or plain old setup.rb:
-
-  ruby setup.rb install
-
 == How to use LiveConsole
 
 LiveConsole is very easy to use in your own app:
@@ -58,17 +54,17 @@ LiveConsole is very easy to use in your own app:
 	# Of course, you must restart before IRB will see the new binding:
 	lc.restart
 
-Have a look at doc/lc_example.rb or doc/lc_unix_example.rb for brief examples
+Have a look at examples/lc_example.rb or examples/lc_unix_example.rb for brief examples
 of how to use LiveConsole.
 
 Try just running it:
 
-	$ ruby doc/lc_example.rb 4000 test
+	$ ruby examples/lc_example.rb 4000 test
 	# Then, in a different shell:
 	$ netcat localhost 4000
 	irb(main):001:0> puts 'Wow, magic!'
 
-	$ ruby doc/lc_unix_example.rb /tmp/live-console.sock
+	$ ruby examples/lc_unix_example.rb /tmp/live-console.sock
 	# Then, in a different shell:
 	$ udscat /tmp/live-console.sock
 	irb(main):001:0> puts 'Words cannot describe the joy I feel.'
