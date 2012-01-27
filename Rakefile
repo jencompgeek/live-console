@@ -6,65 +6,63 @@ require 'fileutils'
 $: << "#{File.dirname(__FILE__)}/lib"
 
 spec = Gem::Specification.new { |s|
-	s.name = LiveConsoleConfig::PkgName
-	s.version = LiveConsoleConfig::Version
-	s.author = LiveConsoleConfig::Authors
-	s.email = LiveConsoleConfig::Email
+  s.name = LiveConsoleConfig::PkgName
+  s.version = LiveConsoleConfig::Version
+  s.author = LiveConsoleConfig::Authors
+  s.email = LiveConsoleConfig::Email
 
-	s.platform = Gem::Platform::RUBY
+  s.platform = Gem::Platform::RUBY
 
-	s.files = Dir["{lib,doc,bin,ext}/**/*"].delete_if {|f| 
-		/\/rdoc(\/|$)/i.match f
-	} + %w(Rakefile)
-	s.require_path = 'lib'
-	s.has_rdoc = true
-	s.extra_rdoc_files = Dir['doc/*'].select(&File.method(:file?))
-	s.extensions << 'ext/extconf.rb' if File.exist? 'ext/extconf.rb'
-	Dir['bin/*'].map(&File.method(:basename)).map(&s.executables.method(:<<))
+  s.files = Dir["{lib,doc,bin,ext}/**/*"].delete_if {|f|
+    /\/rdoc(\/|$)/i.match f
+  } + %w(Rakefile)
+  s.require_path = 'lib'
+  s.has_rdoc = true
+  s.extra_rdoc_files = Dir['doc/*'].select(&File.method(:file?))
+  s.extensions << 'ext/extconf.rb' if File.exist? 'ext/extconf.rb'
+  Dir['bin/*'].map(&File.method(:basename)).map(&s.executables.method(:<<))
 
-	s.summary =	'A library to support adding an irb console to your ' \
+  s.summary =	'A library to support adding an irb console to your ' \
 		'running application.'
-	%w().each &s.method(:add_dependency)
+  %w().each &s.method(:add_dependency)
 }
 
 Rake::RDocTask.new(:doc) { |t|
-	t.main = 'doc/README'
-	t.rdoc_files.include 'lib/**/*.rb', 'doc/*', 'bin/*', 'ext/**/*.c', 
+  t.main = 'doc/README'
+  t.rdoc_files.include 'lib/**/*.rb', 'doc/*', 'bin/*', 'ext/**/*.c',
 		'ext/**/*.rb'
-	t.options << '-S' << '-N'
-	t.rdoc_dir = 'doc/rdoc'
+  t.options << '-S' << '-N'
+  t.rdoc_dir = 'doc/rdoc'
 }
 
 Rake::GemPackageTask.new(spec) { |pkg|
-	pkg.need_tar_bz2 = true
+  pkg.need_tar_bz2 = true
 }
 
 desc "Builds and installs the gem for #{spec.name}"
-task(:install => :package) { 
-	g = "pkg/#{spec.name}-#{spec.version}.gem"
-	system "sudo gem install -l #{g}"
+task(:install => :package) {
+  g = "pkg/#{spec.name}-#{spec.version}.gem"
+  system "sudo gem install -l #{g}"
 }
 
 desc "Runs IRB, automatically require()ing #{spec.name}."
 task(:irb) {
-	exec "irb -Ilib -r#{spec.name}"
+  exec "irb -Ilib -r#{spec.name}"
 }
 
 desc "Cleans up the pkg directory."
 task(:clean) {
-	FileUtils.rm_rf 'pkg'
+  FileUtils.rm_rf 'pkg'
 }
 
 desc "Generates a static gemspec file; useful for github."
 task(:static_gemspec) {
-	# This whole thing is hacky.
-	spec.validate
-	spec_attrs = %w(
-		platform author email files require_path has_rdoc extra_rdoc_files
-		extensions executables name summary homepage
-	).map { |attr|
+  # This whole thing is hacky.
+  spec.validate
+  spec_attrs = %w(platform author email files require_path has_rdoc extra_rdoc_files
+    extensions executables name summary homepage).map { |attr|
 		"\ts.#{attr} = #{spec.send(attr).inspect}\n"
-	}.join << 
+	}.join <<
 		"\ts.version = #{spec.version.to_s.inspect}\n" <<
 		spec.dependencies.map { |dep|
 			"\ts.add_dependency #{dep.inspect}\n"
@@ -77,12 +75,12 @@ task(:static_gemspec) {
 # benefit of github.
 
 spec = Gem::Specification.new { |s|
-#{spec_attrs}}
-if __FILE__ == $0
-	Gem::Builder.new(spec).build 
-else
-	spec # Github wants this file to return the spec.
-end
-		EOGEMSPEC
-	}
+  #{spec_attrs}}
+  if __FILE__ == $0
+    Gem::Builder.new(spec).build
+  else
+    spec # Github wants this file to return the spec.
+  end
+  EOGEMSPEC
+  }
 }
