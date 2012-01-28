@@ -83,6 +83,7 @@ class LiveConsole
       #This will block until a connection is made or a failure occurs
       if conn.start
         thread = Thread.new(conn) {
+        begin
           start_irb = true
           if authenticate && !conn.authenticate
             conn.stop
@@ -96,9 +97,13 @@ class LiveConsole
               conn.stop
             end
           end
-        }
+        rescue Exception => e
+          puts "Error during connection: #{e.message}"
+          conn.stop
+        end
+      }
       end
-    }   
+    }
   end
 
   # Ends the running thread, if it exists.  Returns true if a thread was
