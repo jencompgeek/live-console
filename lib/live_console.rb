@@ -167,8 +167,16 @@ module IRB
     end
 
     ws = IRB::WorkSpace.new(bind)
-    #This needs to be before Irb.new so we get a prompt the first time
-    @CONF[:PROMPT_MODE] = :INF_RUBY
+
+    @CONF[:PROMPT_MODE] = :DEFAULT
+    #Remove the context from all prompts-can be too long depending on binding
+    @CONF[:PROMPT][:DEFAULT][:PROMPT_I] = "%N():%03n:%i> "
+    @CONF[:PROMPT][:DEFAULT][:PROMPT_N] = "%N():%03n:%i> "
+    #Add > to S and C as they don't get picked up by telnet prompt scan
+    @CONF[:PROMPT][:DEFAULT][:PROMPT_S] = "%N():%03n:%i%l> "
+    @CONF[:PROMPT][:DEFAULT][:PROMPT_C] = "%N():%03n:%i*> "
+
+    @CONF[:USE_READLINE] = false
     irb = Irb.new(ws, io, io)
     bind ||= IRB::Frame.top(1) rescue TOPLEVEL_BINDING
 
